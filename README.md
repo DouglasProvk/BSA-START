@@ -147,6 +147,28 @@ LoginMenu_AccountFrozenBSA=Login failed.\nA possible cheat bypass was detected b
 Logo após verificar jogadores temporariamente banidos:
 
 ```cpp
+	// check if that player was kicked before and ban time isn't expired
+	{
+		TKickedPlayers::iterator it = kickedPlayers_.find(n.CustomerID);
+		if(it != kickedPlayers_.end() && r3dGetTime() < it->second)
+		{
+			PKT_S2C_CustomKickMsg_s n2;
+			r3dscpy(n2.msg, "You are temporarily banned from this server");
+			p2pSendRawToPeer(peerId, &n2, sizeof(n2));
+
+			PKT_S2C_JoinGameAns_s n;
+			n.success   = 0;
+			n.playerIdx = 0;
+			n.ownerCustomerID = 0;
+			p2pSendRawToPeer(peerId, &n, sizeof(n));
+
+			DisconnectPeer(peerId, false, "temporary ban");
+			return;
+		}
+	}
+```
+Adicione:
+```cpp
 if (!BS_CheckPlayer(n.CustomerID, "IP-VPS", 3408, "YOUR-KEY"))
 {
     PKT_S2C_CustomKickMsg_s n2;
